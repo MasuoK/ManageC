@@ -21,6 +21,16 @@ int isdigit(char c){
     return ((0<= digit) && (digit <= 9));
 }
 
+//二つの文字列が同じかどうか判定する関数(真：１ 偽：０)
+int issame(char a[], char b[]){
+  int x;
+  for(x=0; x < NAMELEN && a[x] != '\0' && b[x] != '\0'; x++){
+    if(a[x] != b[x])
+      return 0;
+  }
+  return 1;
+}
+
 main()
 {
   int i, j,n, *server, *clients, sockets[MAX_CLIENT+2], len, z;
@@ -79,25 +89,28 @@ main()
     for (i=0; i < MAX_CLIENT; i++) {
       if (clients[i] != FREE) {
 	    if (FD_ISSET(clients[i], &fds)) { /* A Message is exist */
-	     if ((len = read(clients[i], buf, 100))==-1) {
+	     if ((len = read(clients[i], buf, 100)) == -1) {
 	         perror("read"); exit(4);
 	     } 
-         else if (len != 0) {
+       else if (len != 0) {
 	      if (strncmp(buf, "quit", 4) != 0) {
             if(!nameflag[i]){
                 /*  同じユーザ名が入力されないように、一度入力されたユーザ名がすでに使われているかを判定する必要がある */
-                /* 、新しく入力された文字列と、nameflag[i]が立っている所全ての文字列をstrncmpで比較すれば良い  */
-                 for(z=0; z<MAX_CLIENT; z++){
+                /* 新しく入力された文字列と、nameflag[i]が立っている所全ての文字列をstrncmpで比較すれば良い  */
+                printf("buf:%s\n",buf);
+                for(z=0; z < MAX_CLIENT; z++){
                   if(nameflag[z]){
                     for(j=0; j < NAMELEN && name[(z*NAMELEN) + j] != '\0'; j++){
                       buf2[j] = name[(z*NAMELEN) + j];
                     }
-                  }
-                  if(strncmp(buf,buf2,NAMELEN) == 0){
-                    sprintf(buf2,"The name is already used.\n");    //すでに名前が使われていた場合
-                    write(clients[i],buf2,100);
+                    printf("buf2:%s\n",buf2);
+                    if(issame(buf,buf2)){
+                      sprintf(buf2,"The name is already used.\n");    //すでに名前が使われていた場合
+                      write(clients[i],buf2,100);
+                      bzero(buf2,100);
+                      break;
+                    }
                     bzero(buf2,100);
-                    break;
                   }
                 } 
                 if(strncmp(buf,"everyone",8) == 0){
