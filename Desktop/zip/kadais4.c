@@ -1,5 +1,7 @@
 //0~MAX_CLIENTの数値、あるいはユーザ名(または e) "message"と入力されればその相手にメッセージを送る
 //ユーザ名を最初に入力させ、それをそのユーザの名前として他のユーザに出す。
+//とりあえず、空白と改行は\0に置換される
+//あとは、送信先にユーザ名まで指定できればok
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -18,17 +20,21 @@ int isdigit(char c){
     int digit;
 
     digit = c - '0';
-    return ((0<= digit) && (digit <= 9));
+    return ((0 <= digit) && (digit <= 9));
 }
 
 //二つの文字列が同じかどうか判定する関数(真：１ 偽：０)
+//こいつを見直す必要がある
 int issame(char a[], char b[]){
   int x;
   for(x=0; x < NAMELEN && a[x] != '\0' && b[x] != '\0'; x++){
     if(a[x] != b[x])
       return 0;
   }
-  return 1;
+  if(((a[x] == '\0') && (b[x] != '\0')) || ((a[x] != '\0') && (b[x] == '\0')))
+    return 0;
+  else
+    return 1;
 }
 
 main()
@@ -46,6 +52,7 @@ main()
   struct sockaddr_in caddr;
   static char   buf[100];
   static char   buf2[100];
+  static char   temp[NAMELEN];      //ユーザ名を一時的に保存しておく配列
 
   /* Intalize a socket ------------------------------------------ */
   server  = sockets;
@@ -77,9 +84,6 @@ main()
     for (i=0; i < MAX_CLIENT+1; i++) {
       if (sockets[i] != FREE) FD_SET(sockets[i], &fds);
       printf("sokects[%d]=%d\n", i, sockets[i]);
-      printf(" ");
-      for(k=0;k<NAMELEN && name[(i*NAMELEN) + k] !='\0';k++)
-        printf("%c",name[(i*NAMELEN) + k]);
     }
     /* Check message arrivals ----------------------------------- */
     if ((n = select(FD_SETSIZE, &fds, NULL, NULL, NULL)) == -1) { //これ(select)によってどのソケットから通信きたか判別してるらしい
@@ -97,17 +101,29 @@ main()
             if(!nameflag[i]){
                 /*  同じユーザ名が入力されないように、一度入力されたユーザ名がすでに使われているかを判定する必要がある */
                 /* 新しく入力された文字列と、nameflag[i]が立っている所全ての文字列をstrncmpで比較すれば良い  */
-                printf("buf:%s\n",buf);
+                for(j=0; j< NAMELEN && buf[j] != '\0'; j++){
+                      if(buf[j] == '\n'){              //入力+?+改行となってる->buf[j-1]に\0を入れるべきか
+                        buf[j-1] = '\0'; 
+                        break;
+                      }
+                      if(buf[j] == ' '){                     //入力+空白
+                        buf[j] = '\0';
+                        break;
+                      }
+                }
                 for(z=0; z < MAX_CLIENT; z++){
                   if(nameflag[z]){
-                    for(j=0; j < NAMELEN && name[(z*NAMELEN) + j] != '\0'; j++){
+                    for(j=0; j < NAMELEN; j++){
                       buf2[j] = name[(z*NAMELEN) + j];
+                      if(buf2[j] == '\0'){    //nameには\0が入っている
+                        break;                //この処理をしないとbufには\0が入っているのにbuf2に\0が入っていないのでissameの判定がおかしくなる
+                      }
                     }
-                    printf("buf2:%s\n",buf2);
                     if(issame(buf,buf2)){
                       sprintf(buf2,"The name is already used.\n");    //すでに名前が使われていた場合
                       write(clients[i],buf2,100);
                       bzero(buf2,100);
+                      bzero(buf,100);
                       break;
                     }
                     bzero(buf2,100);
@@ -123,14 +139,12 @@ main()
                 nameflag[i] = 1;  //nameflagを立てる
                 //もし、ユーザ側が長い文字列を入力したら強制終了してしまう
                 //改行もユーザ名として認識されてしまう、しかし、for文で条件を除こうとすると出力がおかしくなる
-                for(j=0; (j < NAMELEN) && (buf[j] != '\0'); j++){
-                  if(buf[j] == '\n' || buf[j] == ' '){
-                    message[j] = '\0';
-                    name[(i*NAMELEN)+j] = '\0';
-                    break;
-                  }
+                for(j=0; j < NAMELEN; j++){
                   message[j] = buf[j];             //クライアント側や、ユーザ側へユーザ名を出力しやすくするため一時的に保存
                   name[(i*NAMELEN)+j] = buf[j];    //ユーザ名を登録
+                  if(buf[j] == '\0'){
+                    break;
+                  }
                 }
                 bzero(buf,100);
                 printf("client(%d) name is %s\n",i,message);
@@ -153,11 +167,14 @@ main()
 
               if(strncmp(buf,"everyone",8) == 0){      //eが入力されたら自分以外のみんなに送る
                 printf("From %d to every one\n",i);
-                sprintf(buf2,"> %d(e) ",i);
+                for(j=0; j < NAMELEN && name[(i*NAMELEN)+j] != '\0'; j++)
+                  temp[j] = name[(i*NAMELEN)+j];
+                sprintf(buf2," (%d) (e) > ",i);
                 for(z=0; z<MAX_CLIENT; z++){
                     if(z != i){
+                        write(clients[z],temp,NAMELEN);
                         write(clients[z],buf2,100);
-                        write(clients[z],buf+(x+1),100);    //messageの部分だけを送信する
+                        write(clients[z],buf+(x+8),100);    //messageの部分だけを送信する
                         sprintf(buf2,"\n");
                         write(clients[z],buf2,1);
                     }
@@ -169,7 +186,10 @@ main()
               }
               else if((cli < MAX_CLIENT)){ //送信先番号がクライアントの上限数を超えてない
                   printf("From %d to %d\n",i,cli);
-                  sprintf(buf2,"> %d ",i);
+                  for(j=0; j < NAMELEN && name[(i*NAMELEN)+j] != '\0'; j++)
+                    temp[j] = name[(i*NAMELEN)+j];           
+                  sprintf(buf2," (%d) > ",i);
+                  write(clients[cli],temp,NAMELEN);
                   write(clients[cli],buf2,100);
                   write(clients[cli],buf+(x+1),100);    //messageの部分だけ送信する
                   sprintf(buf2,"\n");
@@ -178,6 +198,7 @@ main()
               write(clients[i],buf2,1);
               bzero(buf,100);
               bzero(buf2,100);
+              bzero(temp,NAMELEN);
             }//(else):nameglag[i]==1
           }//if (strncmp(buf, "quit", 4) != 0)
           else{
