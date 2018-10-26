@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 package javafxmlcalc;
-
+//あああああああああああああああああああ
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URL;
