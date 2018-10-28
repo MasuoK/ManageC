@@ -29,30 +29,21 @@ int main(void) {
     printf("redirect from: ");
     fgets(infnbuf, FNBUFSIZ, stdin);
     infnbuf[strlen(infnbuf) - 1] = '\0';
-    if(fork() == 0){
-    /* 子プロセス側  */
-    /* 入力リダイレクト  */
-        if((infd = open(infnbuf,0644)) < 0){
-            fprintf(stderr, "cannot open %s\n",infnbuf);
-            exit(1);
-        }
-        close(0);
-        dup(infd);
-        /* コマンドの実行  */
-        execlp(combuf,combuf,NULL);
-        /* 以下はexec()失敗時  */
-        fprintf(stderr,"cannot execute command\n");
-        /* exec() 失敗時はすぐに終了  */
-        exit(1);
-    }
     /* 出力ファイル名の入力 */ 
     printf("redirect to: "); 
     fgets(outfnbuf, FNBUFSIZ, stdin);
     outfnbuf[strlen(outfnbuf) - 1] = '\0';
     if(fork() == 0) {
     /* 子プロセス側 */
+    /* 入力リダイレクト  */
+        if((infd = open(infnbuf,O_RDONLY)) < 0){    //読み込み専用
+            fprintf(stderr, "cannot open %s\n",infnbuf);
+            exit(1);
+        }
+        close(0);
+        dup(infd);
     /* 出力リダイレクト */
-        if((outfd = creat(outfnbuf, 0644)) < 0) {
+        if((outfd = creat(outfnbuf, O_WRONLY)) < 0) {   //書き込み専用
             fprintf(stderr, "cannot open %s\n", outfnbuf);
             exit(1);
         }
