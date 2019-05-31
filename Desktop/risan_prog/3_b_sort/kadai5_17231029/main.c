@@ -64,7 +64,7 @@ int main(int argc, char *argv[]){
   printf("%fsec\n",(double)(end -start)/CLOCKS_PER_SEC);
 
   //fileに出力(fputs:1行書き込む)
-    fputs(string, file_out);
+  fputs(string, file_out);
 
   free(string);
   fclose(file_in);

@@ -32,44 +32,16 @@ void Msort(char *Data[], char *temp[] , int left, int right)
   }
 }
 
-/*
-void Msort(int Data[ ], int temp[ ], int left, int right,char w[],int size) {
 
-  int mid, i, j, k,l;
-  if (left >= right)
-    return;
-  mid = (left + right) / 2;
-  Msort(Data, temp, left, mid,w,size);
-  Msort(Data, temp, mid + 1, right,w,size);
-  for (i = left; i <= mid; i++)
-    temp[i] = Data[i];
-  for (i = mid + 1, j = right; i <= right; i++, j--)
-    temp[i] = Data[j];
-  i = left;
-  j = right;
-  char  *wi = (char*)malloc(sizeof(char)* size);
-  char  *wj = (char*)malloc(sizeof(char)* size);
-
-  for (k = left; k <= right; k++){
-    for(l=0;l<size;l++){
-      wi[l] = w[i+l];
-      wj[l] = w[j+l];
-    }
-
-    //文字列の比較にはstrcmpを使う
-    if (strncmp(wi, wj,size) < 0){
-      Data[k] = temp[i];
-      i++;
-    }else{
-      Data[k] = temp[j];
-      j--;
-    }
-  }
-  free(wi);
-  free(wj);
+void bsort(char **string_array, int size) {
+  char **temp = (char**)malloc(sizeof(char*) * size); // 大きいサイズの配列を確保
+  printf("bsort started\n");
+  Msort(string_array,temp,0,size-1);
+  printf("bsort finished\n");
 }
-*/
 
+
+/*
 void bsort(char *string_array, int size) {
 	//input your code here...
   int *temp = (int*)malloc(sizeof(int) * size); // 大きいサイズの配列を確保
@@ -116,3 +88,4 @@ void bsort(char *string_array, int size) {
   strcpy(string_array,bws);
 
 }
+*/
