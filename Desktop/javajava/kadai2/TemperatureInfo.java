@@ -4,23 +4,23 @@ public class TemperatureInfo{
     float low;  //最低気温
     float ave;  //平均気温
 
-    protected TemperatureComparator(String day, float high, float low, float ave){
-        this.day = day;
-        this.high = high;
-        this.low = low;
-        this.ave = ave;
+    protected TemperatureInfo(String iday, float ihigh, float ilow, float iave){
+        this.day = iday;
+        this.high = ihigh;
+        this.low = ilow;
+        this.ave = iave;
     }
    
     public String getDay(){
         return this.day;
     }
-    public int getHigh(){
+    public float getHigh(){
         return this.high;
     }
-    public int getLow(){
+    public float getLow(){
         return this.low;
     }    
-    public int getAve(){
+    public float getAve(){
         return this.ave;
     }
 }
