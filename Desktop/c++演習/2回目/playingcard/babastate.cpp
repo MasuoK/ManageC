@@ -59,8 +59,19 @@ bool BabaState::goNext() {
 // 渡ったカード（のコピー）を返す
 
 Card BabaState::move(int from, int to){
+    //from番目のプレイヤーの持ち手からカードをランダムにとる
+    //draw(Card & card, int targetpos): targetposが-1または、手札の上限を超えた場合ランダムにカードが取られる
+    //hand[]はcardset型
+    //drawとinsertはcardset型のメソッド
     
-    wastePair(to); //to番のプレーヤーのカードを捨てる
+    Card c;
+    if(hand[from].draw(c,-1)){
+        if(hand[to].insert(c)){
+            wastePair(to); //to番のプレーヤーでペアになったカードを捨てる
+        }
+    }
+    
+    return c;
 }
 
 
